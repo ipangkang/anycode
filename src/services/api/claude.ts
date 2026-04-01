@@ -3397,6 +3397,14 @@ function isMaxTokensCapEnabled(): boolean {
 }
 
 export function getMaxOutputTokensForModel(model: string): number {
+  // anycode: respect provider max_tokens setting
+  if ((globalThis as any).__anycode_has_provider) {
+    const providerMax = (globalThis as any).__anycode_max_tokens
+    if (providerMax) {
+      const envOverride = process.env.ANYCODE_MAX_TOKENS || process.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS
+      return envOverride ? Math.min(parseInt(envOverride), providerMax) : providerMax
+    }
+  }
   const maxOutputTokens = getModelMaxOutputTokens(model)
 
   // Slot-reservation cap: drop default to 8k for all models. BQ p99 output

@@ -912,9 +912,13 @@ async function run(): Promise<CommanderCommand> {
     const _providerConfig = _loadPC();
     const _isCustomProvider = !!_providerConfig;
     if (_isCustomProvider) {
+      const { getContextWindowForProvider: _gcw } = await import('./services/api/providerConfig.js');
       (globalThis as any).__anycode_has_provider = true;
       (globalThis as any).__anycode_provider_model = _providerConfig!.model;
       (globalThis as any).__anycode_provider_name = _providerConfig!.provider;
+      const { getMaxTokensForProvider: _gmt } = await import('./services/api/providerConfig.js');
+      (globalThis as any).__anycode_context_window = _gcw(_providerConfig!);
+      (globalThis as any).__anycode_max_tokens = _gmt(_providerConfig!);
     }
 
     if (!_isCustomProvider) {

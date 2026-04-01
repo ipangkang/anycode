@@ -52,10 +52,17 @@ export function getContextWindowForModel(
   model: string,
   betas?: string[],
 ): number {
+  // anycode: use provider-configured context window
+  if ((globalThis as any).__anycode_has_provider) {
+    // Allow override via ANYCODE_CONTEXT_WINDOW env var
+    if (process.env.ANYCODE_CONTEXT_WINDOW) {
+      const override = parseInt(process.env.ANYCODE_CONTEXT_WINDOW, 10)
+      if (!isNaN(override) && override > 0) return override
+    }
+    return (globalThis as any).__anycode_context_window || 32000
+  }
+
   // Allow override via environment variable (ant-only)
-  // This takes precedence over all other context window resolution, including 1M detection,
-  // so users can cap the effective context window for local decisions (auto-compact, etc.)
-  // while still using a 1M-capable endpoint.
   if (
     process.env.USER_TYPE === 'ant' &&
     process.env.CLAUDE_CODE_MAX_CONTEXT_TOKENS

@@ -7,11 +7,7 @@ import { isEnvDefinedFalsy } from '../utils/envUtils.js'
 import { getAPIProvider } from '../utils/model/providers.js'
 import { getWorkload } from '../utils/workloadContext.js'
 
-// anycode: include model name in system prompt so the model knows what it is
-const _modelInfo = (globalThis as any).__anycode_provider_model
-  ? ` You are powered by ${(globalThis as any).__anycode_provider_model}.`
-  : ''
-const DEFAULT_PREFIX = `You are anycode, a universal coding agent.${_modelInfo}`
+const DEFAULT_PREFIX = `You are anycode, a universal coding agent.`
 const AGENT_SDK_CLAUDE_CODE_PRESET_PREFIX = `You are anycode, a universal coding agent, running within the Agent SDK.`
 const AGENT_SDK_PREFIX = `You are an anycode agent, a universal coding agent.`
 

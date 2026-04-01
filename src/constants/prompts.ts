@@ -657,7 +657,13 @@ export async function computeSimpleEnvInfo(
   // Undercover: strip all model name/ID references. See computeEnvInfo.
   // DCE: inline the USER_TYPE check at each site — do NOT hoist to a const.
   let modelDescription: string | null = null
-  if (process.env.USER_TYPE === 'ant' && isUndercover()) {
+  if ((globalThis as any).__anycode_has_provider) {
+    const providerModel = (globalThis as any).__anycode_provider_model || modelId
+    const providerName = (globalThis as any).__anycode_provider_name || ''
+    modelDescription = providerName
+      ? `You are powered by ${providerModel} via ${providerName}.`
+      : `You are powered by ${providerModel}.`
+  } else if (process.env.USER_TYPE === 'ant' && isUndercover()) {
     // suppress
   } else {
     const marketingName = getMarketingNameForModel(modelId)
