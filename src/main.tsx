@@ -3947,8 +3947,27 @@ async function run(): Promise<CommanderCommand> {
     return program;
   }
 
-  // claude mcp
+  // anycode provider-info
+  program.command('provider-info').description('Show current provider configuration').action(async () => {
+    const { loadProviderConfig, getMaxTokensForProvider, getContextWindowForProvider } = await import('./services/api/providerConfig.js');
+    const config = loadProviderConfig();
+    if (!config) {
+      console.log('\x1b[33mNo provider configured.\x1b[0m');
+      console.log('Run \x1b[1manycode\x1b[0m to set up a provider, or create ~/.anycode/provider.json');
+      process.exit(1);
+    }
+    console.log('\x1b[1manycode provider configuration\x1b[0m');
+    console.log(`  Provider:       ${config.provider}`);
+    console.log(`  Base URL:       ${config.baseUrl}`);
+    console.log(`  Model:          ${config.model}`);
+    console.log(`  API Key:        ${'*'.repeat(Math.max(0, config.apiKey.length - 8))}${config.apiKey.slice(-8)}`);
+    console.log(`  Max Tokens:     ${getMaxTokensForProvider(config)}`);
+    console.log(`  Context Window: ${getContextWindowForProvider(config).toLocaleString()}`);
+    console.log(`  Config File:    ~/.anycode/provider.json`);
+    process.exit(0);
+  });
 
+  // anycode mcp
   const mcp = program.command('mcp').description('Configure and manage MCP servers').configureHelp(createSortedHelpConfig()).enablePositionalOptions();
   mcp.command('serve').description(`Start the Claude Code MCP server`).option('-d, --debug', 'Enable debug mode', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).action(async ({
     debug,

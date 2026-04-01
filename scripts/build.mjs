@@ -120,7 +120,8 @@ for await (const file of walk(join(BUILD, 'src'))) {
     changed = true
   }
   // 2f. Replace CLAUDE.md with .anycode.md in user-facing strings
-  if (src.includes('CLAUDE.md')) {
+  // Skip claudemd.ts — it needs the original filename for backwards compatibility
+  if (src.includes('CLAUDE.md') && !file.includes('claudemd')) {
     src = src.replaceAll('CLAUDE.md', '.anycode.md')
     changed = true
   }

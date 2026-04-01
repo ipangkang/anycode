@@ -83,14 +83,18 @@ export function hasCachedProviderConfig(): boolean {
   return getCachedProviderConfig() !== null
 }
 
+function findPreset(providerName: string): ProviderPreset | undefined {
+  // Case-insensitive, partial match
+  const lower = providerName.toLowerCase()
+  return PROVIDER_PRESETS.find(p => p.name.toLowerCase() === lower || p.name.toLowerCase().includes(lower))
+}
+
 export function getMaxTokensForProvider(config: ProviderConfig): number {
   if (config.maxTokens) return config.maxTokens
-  const preset = PROVIDER_PRESETS.find(p => p.name === config.provider)
-  return preset?.maxTokens || 8192
+  return findPreset(config.provider)?.maxTokens || 8192
 }
 
 export function getContextWindowForProvider(config: ProviderConfig): number {
   if (config.contextWindow) return config.contextWindow
-  const preset = PROVIDER_PRESETS.find(p => p.name === config.provider)
-  return preset?.contextWindow || 32000
+  return findPreset(config.provider)?.contextWindow || 32000
 }

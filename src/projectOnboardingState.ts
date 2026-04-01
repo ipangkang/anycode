@@ -19,6 +19,8 @@ export type Step = {
 export function getSteps(): Step[] {
   const hasClaudeMd = getFsImplementation().existsSync(
     join(getCwd(), '.anycode.md'),
+  ) || getFsImplementation().existsSync(
+    join(getCwd(), 'CLAUDE.md'),
   )
   const isWorkspaceDirEmpty = isDirEmpty(getCwd())
 
