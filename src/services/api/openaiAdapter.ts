@@ -57,9 +57,13 @@ interface AnthropicRequest {
 
 // ── OpenAI Types ──
 
+type OpenAIContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string; detail?: string } }
+
 interface OpenAIMessage {
   role: 'system' | 'user' | 'assistant' | 'tool'
-  content: string | null
+  content: string | null | OpenAIContentPart[]
   tool_calls?: Array<{
     id: string
     type: 'function'
@@ -145,16 +149,26 @@ export function translateRequest(anthropicReq: AnthropicRequest): OpenAIRequest 
       messages.push(oaiMsg)
     } else if (msg.role === 'user') {
       const toolResults: AnthropicToolResultBlock[] = []
-      const textParts: string[] = []
+      const contentParts: OpenAIContentPart[] = []
 
       for (const block of msg.content) {
         if (block.type === 'tool_result') {
           toolResults.push(block as AnthropicToolResultBlock)
         } else if (block.type === 'text') {
-          textParts.push((block as AnthropicTextBlock).text)
+          contentParts.push({ type: 'text', text: (block as AnthropicTextBlock).text })
+        } else if (block.type === 'image') {
+          // Anthropic image format → OpenAI image_url format
+          const img = block as any
+          if (img.source?.type === 'base64') {
+            const dataUrl = `data:${img.source.media_type};base64,${img.source.data}`
+            contentParts.push({ type: 'image_url', image_url: { url: dataUrl } })
+          } else if (img.source?.type === 'url') {
+            contentParts.push({ type: 'image_url', image_url: { url: img.source.url } })
+          }
         }
       }
 
+      // Emit tool results as separate tool messages
       for (const tr of toolResults) {
         let content: string
         if (typeof tr.content === 'string') {
@@ -168,8 +182,15 @@ export function translateRequest(anthropicReq: AnthropicRequest): OpenAIRequest 
         messages.push({ role: 'tool', tool_call_id: tr.tool_use_id, content })
       }
 
-      if (textParts.length > 0) {
-        messages.push({ role: 'user', content: textParts.join('\n') })
+      // Emit content parts
+      if (contentParts.length > 0) {
+        // Use multimodal array format if there are images, plain string otherwise
+        const hasImages = contentParts.some(p => p.type === 'image_url')
+        if (hasImages) {
+          messages.push({ role: 'user', content: contentParts })
+        } else {
+          messages.push({ role: 'user', content: contentParts.map(p => (p as any).text).join('\n') })
+        }
       }
     }
   }

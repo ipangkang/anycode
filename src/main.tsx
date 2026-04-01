@@ -992,8 +992,38 @@ async function run(): Promise<CommanderCommand> {
   // `mcp` and `add` as paths, then choked on --transport as an unknown
   // top-level option. Single-value + collect accumulator means each
   // --plugin-dir takes exactly one arg; repeat the flag for multiple dirs.
-  .option('--plugin-dir <path>', 'Load plugins from a directory for this session only (repeatable: --plugin-dir A --plugin-dir B)', (val: string, prev: string[]) => [...prev, val], [] as string[]).option('--disable-slash-commands', 'Disable all skills', () => true).option('--chrome', 'Enable Claude in Chrome integration').option('--no-chrome', 'Disable Claude in Chrome integration').option('--file <specs...>', 'File resources to download at startup. Format: file_id:relative_path (e.g., --file file_abc:doc.txt file_def:img.png)').action(async (prompt, options) => {
+  .option('--plugin-dir <path>', 'Load plugins from a directory for this session only (repeatable: --plugin-dir A --plugin-dir B)', (val: string, prev: string[]) => [...prev, val], [] as string[]).option('--disable-slash-commands', 'Disable all skills', () => true).option('--chrome', 'Enable Claude in Chrome integration').option('--no-chrome', 'Disable Claude in Chrome integration').option('--file <specs...>', 'File resources to download at startup. Format: file_id:relative_path (e.g., --file file_abc:doc.txt file_def:img.png)').option('--test', 'Test API connection and exit').action(async (prompt, options) => {
     profileCheckpoint('action_handler_start');
+
+    // anycode: --test flag to verify API connectivity
+    if (options.test) {
+      const { loadProviderConfig } = await import('./services/api/providerConfig.js');
+      const { createOpenAIAdapterClient } = await import('./services/api/openaiAdapter.js');
+      const config = loadProviderConfig();
+      if (!config) {
+        console.log('\x1b[31m✗ No provider configured\x1b[0m');
+        console.log('  Run anycode to set up a provider, or create ~/.anycode/provider.json');
+        process.exit(1);
+      }
+      console.log(`Testing connection to ${config.provider} (${config.baseUrl})...`);
+      console.log(`Model: ${config.model}`);
+      try {
+        const client = createOpenAIAdapterClient(config);
+        const response = await client.messages.create({
+          model: config.model,
+          max_tokens: 20,
+          messages: [{ role: 'user', content: 'Say "ok"' }],
+        });
+        const text = (response as any).content?.[0]?.text || '';
+        console.log(`\x1b[32m✓ Connection successful\x1b[0m`);
+        console.log(`  Response: ${text.trim()}`);
+        process.exit(0);
+      } catch (e: any) {
+        console.log(`\x1b[31m✗ Connection failed\x1b[0m`);
+        console.log(`  ${e.message}`);
+        process.exit(1);
+      }
+    }
 
     // --bare = one-switch minimal mode. Sets SIMPLE so all the existing
     // gates fire (CLAUDE.md, skills, hooks inside executeHooks, agent
