@@ -98,6 +98,18 @@ export async function getAnthropicClient({
   fetchOverride?: ClientOptions['fetch']
   source?: string
 }): Promise<Anthropic> {
+  // anycode: If custom provider is configured, use OpenAI adapter instead of Anthropic SDK
+  const { loadProviderConfig } = await import('./providerConfig.js')
+  const { createOpenAIAdapterClient } = await import('./openaiAdapter.js')
+  const providerConfig = loadProviderConfig()
+  if (providerConfig) {
+    return createOpenAIAdapterClient({
+      baseUrl: providerConfig.baseUrl,
+      apiKey: providerConfig.apiKey,
+      model: providerConfig.model,
+    }) as any
+  }
+
   const containerId = process.env.CLAUDE_CODE_CONTAINER_ID
   const remoteSessionId = process.env.CLAUDE_CODE_REMOTE_SESSION_ID
   const clientApp = process.env.CLAUDE_AGENT_SDK_CLIENT_APP

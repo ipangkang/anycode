@@ -98,6 +98,9 @@ function isManagedOAuthContext(): boolean {
 /** Whether we are supporting direct 1P auth. */
 // this code is closely related to getAuthTokenSource
 export function isAnthropicAuthEnabled(): boolean {
+  // anycode: skip Anthropic auth when custom provider is configured
+  if ((globalThis as any).__anycode_has_provider) return false
+
   // --bare: API-key-only, never OAuth.
   if (isBareMode()) return false
 

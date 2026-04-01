@@ -253,9 +253,12 @@ export function getLogoDisplayData(): {
   const cwd = serverUrl
     ? `${displayPath} in ${serverUrl.replace(/^https?:\/\//, '')}`
     : displayPath
-  const billingType = isClaudeAISubscriber()
-    ? getSubscriptionName()
-    : 'API Usage Billing'
+  // anycode: show provider info instead of Anthropic billing
+  const billingType = (globalThis as any).__anycode_has_provider
+    ? `${(globalThis as any).__anycode_provider_name} · ${(globalThis as any).__anycode_provider_model}`
+    : isClaudeAISubscriber()
+      ? getSubscriptionName()
+      : 'API Usage Billing'
   const agentName = getInitialSettings().agent
 
   return {

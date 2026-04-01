@@ -34,6 +34,8 @@ export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
 
 export function getSmallFastModel(): ModelName {
+  // anycode: use provider config model when available
+  if ((globalThis as any).__anycode_provider_model) return (globalThis as any).__anycode_provider_model
   return process.env.ANTHROPIC_SMALL_FAST_MODEL || getDefaultHaikuModel()
 }
 
@@ -90,6 +92,12 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
  * @returns The resolved model name to use
  */
 export function getMainLoopModel(): ModelName {
+  // anycode: use provider config model when available
+  if ((globalThis as any).__anycode_has_provider) {
+    const override = getMainLoopModelOverride()
+    if (override !== undefined && override !== null) return parseUserSpecifiedModel(override)
+    return (globalThis as any).__anycode_provider_model
+  }
   const model = getUserSpecifiedModelSetting()
   if (model !== undefined && model !== null) {
     return parseUserSpecifiedModel(model)
