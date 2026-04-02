@@ -14,6 +14,7 @@ import desktop from './commands/desktop/index.js'
 import commitPushPr from './commands/commit-push-pr.js'
 import compact from './commands/compact/index.js'
 import config from './commands/config/index.js'
+import switchProvider from './commands/switch/index.js'
 import provider from './commands/provider/index.js'
 import { context, contextNonInteractive } from './commands/context/index.js'
 import cost from './commands/cost/index.js'
@@ -268,6 +269,7 @@ const COMMANDS = memoize((): Command[] => [
   compact,
   config,
   provider,
+  switchProvider,
   copy,
   desktop,
   context,

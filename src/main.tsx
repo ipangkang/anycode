@@ -4174,7 +4174,33 @@ async function run(): Promise<CommanderCommand> {
 
   // claude auth
 
-  const auth = program.command('auth').description('Manage authentication').configureHelp(createSortedHelpConfig());
+  const auth = program.command('auth').description('Configure LLM provider authentication').configureHelp(createSortedHelpConfig());
+  // anycode: `anycode auth` without subcommand runs provider setup
+  auth.action(async () => {
+    const { PROVIDER_PRESETS, saveProviderConfig, loadProviderConfig: _lpc } = await import('./services/api/providerConfig.js');
+    const readline = await import('readline');
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ask = (q: string): Promise<string> => new Promise(r => rl.question(q, r));
+    console.log('\n\x1b[1m\x1b[36m  anycode — Provider Setup\x1b[0m\n');
+    const existing = _lpc();
+    if (existing) {
+      console.log(`  Current: ${existing.provider} / ${existing.model}`);
+      const ans = await ask('  Reconfigure? [y/N] ');
+      if (ans.trim().toLowerCase() !== 'y') { rl.close(); process.exit(0); }
+    }
+    console.log('\n  Providers:');
+    PROVIDER_PRESETS.forEach((p: any, i: number) => console.log(`    ${i+1}. ${p.name}${p.baseUrl ? ` (${p.baseUrl})` : ''}`));
+    const choice = parseInt(await ask(`\n  Select [1-${PROVIDER_PRESETS.length}]: `));
+    const preset = PROVIDER_PRESETS[choice - 1] || PROVIDER_PRESETS[PROVIDER_PRESETS.length - 1];
+    let baseUrl = preset.baseUrl, model = preset.defaultModel, providerName = preset.name;
+    if (!baseUrl) { baseUrl = await ask('  Base URL: '); model = await ask('  Model: '); providerName = 'Custom'; }
+    else { const m = await ask(`  Model [${model}]: `); if (m.trim()) model = m.trim(); }
+    const apiKey = await ask('  API Key: ');
+    if (!apiKey.trim()) { console.log('\x1b[31m  Error: API key required\x1b[0m'); rl.close(); process.exit(1); }
+    saveProviderConfig({ provider: providerName, baseUrl, apiKey: apiKey.trim(), model });
+    console.log('\x1b[32m  ✓ Saved!\x1b[0m Run \x1b[1manycode\x1b[0m to start.\n');
+    rl.close(); process.exit(0);
+  });
   auth.command('login').description('Sign in to your Anthropic account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use Anthropic Console (API usage billing) instead of Claude subscription').option('--claudeai', 'Use Claude subscription (default)').action(async ({
     email,
     sso,
