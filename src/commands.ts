@@ -153,7 +153,7 @@ const buddy = feature('BUDDY')
               `\n🎲 Rolling new companion...\n`,
               sprite.join('\n'),
               ``,
-              `${rarityColors[bones.rarity] || ''} ${bones.rarity.toUpperCase()} ${bones.species.name}!`,
+              `${rarityColors[bones.rarity] || ''} ${bones.rarity.toUpperCase()} ${bones.species}!`,
               `Eyes: ${bones.eye}  Hat: ${bones.hat}${bones.shiny ? '  ✨ SHINY!' : ''}`,
               ``,
               `📊 Stats:`,
