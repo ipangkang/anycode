@@ -156,9 +156,7 @@ export function isCseShimEnabled(): boolean {
  * loaded yet, the default '0.0.0' means the check passes — a safe fallback.
  */
 export function checkBridgeMinVersion(): string | null {
-  // Positive pattern — see docs/feature-gating.md.
-  // Negative pattern (if (!feature(...)) return) does not eliminate
-  // inline string literals from external builds.
+  if ((globalThis as any).__anycode_has_provider) return null
   if (feature('BRIDGE_MODE')) {
     const config = getDynamicConfig_CACHED_MAY_BE_STALE<{
       minVersion: string
