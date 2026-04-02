@@ -26,6 +26,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
   { name: 'MiniMax', baseUrl: 'https://api.minimax.chat/v1', defaultModel: 'MiniMax-Text-01', maxTokens: 16384, contextWindow: 1000000 },
   { name: 'GLM (Zhipu)', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', defaultModel: 'glm-4-plus', maxTokens: 8192, contextWindow: 128000 },
   { name: 'SiliconFlow', baseUrl: 'https://api.siliconflow.cn/v1', defaultModel: 'deepseek-ai/DeepSeek-V3', maxTokens: 8192, contextWindow: 64000 },
+  { name: 'Kimi (Moonshot)', baseUrl: 'https://api.moonshot.cn/v1', defaultModel: 'moonshot-v1-auto', maxTokens: 8192, contextWindow: 128000 },
   { name: 'Ollama (Local)', baseUrl: 'http://localhost:11434/v1', defaultModel: 'llama3', maxTokens: 4096, contextWindow: 8000 },
   { name: 'Custom', baseUrl: '', defaultModel: '', contextWindow: 32000 },
 ]
