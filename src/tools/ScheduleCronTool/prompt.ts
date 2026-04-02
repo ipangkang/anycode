@@ -34,6 +34,10 @@ export const DEFAULT_MAX_AGE_DAYS =
  * `CLAUDE_CODE_DISABLE_CRON` is a local override that wins over GB.
  */
 export function isKairosCronEnabled(): boolean {
+  // anycode: always enable cron/loop
+  if ((globalThis as any).__anycode_has_provider) {
+    return !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_CRON)
+  }
   return feature('AGENT_TRIGGERS')
     ? !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_CRON) &&
         getFeatureValue_CACHED_WITH_REFRESH(
