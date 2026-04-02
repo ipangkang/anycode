@@ -6,6 +6,7 @@ export interface ProviderPreset {
   name: string
   baseUrl: string
   defaultModel: string
+  models?: string[]       // All available models for this provider
   maxTokens?: number
   contextWindow?: number  // Total context window size in tokens
 }
@@ -98,4 +99,27 @@ export function getMaxTokensForProvider(config: ProviderConfig): number {
 export function getContextWindowForProvider(config: ProviderConfig): number {
   if (config.contextWindow) return config.contextWindow
   return findPreset(config.provider)?.contextWindow || 32000
+}
+
+/**
+ * Fetch available models from the provider's /v1/models endpoint.
+ * Returns empty array if the endpoint is not supported.
+ */
+export async function fetchAvailableModels(config: ProviderConfig): Promise<string[]> {
+  try {
+    const url = `${config.baseUrl.replace(/\/+$/, '')}/models`
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${config.apiKey}` },
+      signal: AbortSignal.timeout(5000),
+    })
+    if (!response.ok) return []
+    const data = await response.json() as any
+    const models = (data.data || [])
+      .map((m: any) => m.id as string)
+      .filter((id: string) => id && !id.includes('embed') && !id.includes('whisper') && !id.includes('tts') && !id.includes('dall-e'))
+      .sort()
+    return models
+  } catch {
+    return []
+  }
 }

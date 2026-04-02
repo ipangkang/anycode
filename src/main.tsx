@@ -919,6 +919,11 @@ async function run(): Promise<CommanderCommand> {
       const { getMaxTokensForProvider: _gmt } = await import('./services/api/providerConfig.js');
       (globalThis as any).__anycode_context_window = _gcw(_providerConfig!);
       (globalThis as any).__anycode_max_tokens = _gmt(_providerConfig!);
+      // Fetch available models in background (non-blocking)
+      const { fetchAvailableModels: _fam } = await import('./services/api/providerConfig.js');
+      _fam(_providerConfig!).then(models => {
+        (globalThis as any).__anycode_available_models = models;
+      }).catch(() => {});
     }
 
     if (!_isCustomProvider) {

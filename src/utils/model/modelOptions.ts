@@ -269,19 +269,29 @@ function getOpusPlanOption(): ModelOption {
 // @[MODEL LAUNCH]: Update the model picker lists below to include/reorder options for the new model.
 // Each user tier (ant, Max/Team Premium, Pro/Team Standard/Enterprise, PAYG 1P, PAYG 3P) has its own list.
 function getModelOptionsBase(fastMode = false): ModelOption[] {
-  // anycode: show current provider model instead of Claude models
+  // anycode: show current provider model and allow switching
   if ((globalThis as any).__anycode_has_provider) {
     const model = (globalThis as any).__anycode_provider_model || 'unknown'
     const provider = (globalThis as any).__anycode_provider_name || ''
-    return [{
+    const cachedModels: string[] = (globalThis as any).__anycode_available_models || []
+    const options: ModelOption[] = [{
       value: 'default',
-      label: `Default (${model})`,
-      description: `Current provider: ${provider}`,
-    }, {
-      value: model,
-      label: model,
-      description: `${provider} · Change model in ~/.anycode/provider.json or use /switch`,
+      label: `${model} (current)`,
+      description: `${provider}`,
     }]
+    // Show other available models fetched from /v1/models
+    for (const m of cachedModels) {
+      if (m !== model) {
+        options.push({ value: m, label: m, description: provider })
+      }
+    }
+    // Always offer manual input
+    options.push({
+      value: '__custom__',
+      label: 'Enter model name...',
+      description: 'Type any model ID supported by your provider',
+    })
+    return options
   }
   if (process.env.USER_TYPE === 'ant') {
     // Build options from antModels config
