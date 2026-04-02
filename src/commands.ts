@@ -132,7 +132,12 @@ const buddy = feature('BUDDY')
           saveGlobalConfig(current => ({
             ...current,
             companionSeed: newSeed,
-            companion: undefined,
+            // Set companion with a default name — buddy is active when this field exists
+            companion: {
+              name: 'Buddy',
+              personality: 'A helpful coding companion.',
+              hatchedAt: Date.now(),
+            },
           }))
           const { bones } = roll(newSeed)
           const sprite = renderSprite(bones, 0)
