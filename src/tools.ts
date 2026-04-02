@@ -26,27 +26,13 @@ const SleepTool =
   feature('PROACTIVE') || feature('KAIROS')
     ? require('./tools/SleepTool/SleepTool.js').SleepTool
     : null
-const _cronToolsFromFeature = feature('AGENT_TRIGGERS')
+const cronTools = feature('AGENT_TRIGGERS')
   ? [
       require('./tools/ScheduleCronTool/CronCreateTool.js').CronCreateTool,
       require('./tools/ScheduleCronTool/CronDeleteTool.js').CronDeleteTool,
       require('./tools/ScheduleCronTool/CronListTool.js').CronListTool,
     ]
-  : null
-// anycode: lazy evaluation — __anycode_has_provider is set after module load
-function getCronTools() {
-  if (_cronToolsFromFeature) return _cronToolsFromFeature
-  if ((globalThis as any).__anycode_has_provider) {
-    try {
-      return [
-        require('./tools/ScheduleCronTool/CronCreateTool.js').CronCreateTool,
-        require('./tools/ScheduleCronTool/CronDeleteTool.js').CronDeleteTool,
-        require('./tools/ScheduleCronTool/CronListTool.js').CronListTool,
-      ]
-    } catch { return [] }
-  }
-  return []
-}
+  : []
 const RemoteTriggerTool = feature('AGENT_TRIGGERS_REMOTE')
   ? require('./tools/RemoteTriggerTool/RemoteTriggerTool.js').RemoteTriggerTool
   : null
@@ -246,7 +232,7 @@ export function getAllBaseTools(): Tools {
     ...(process.env.USER_TYPE === 'ant' && REPLTool ? [REPLTool] : []),
     ...(WorkflowTool ? [WorkflowTool] : []),
     ...(SleepTool ? [SleepTool] : []),
-    ...getCronTools(),
+    ...cronTools,
     ...(RemoteTriggerTool ? [RemoteTriggerTool] : []),
     ...(MonitorTool ? [MonitorTool] : []),
     BriefTool,

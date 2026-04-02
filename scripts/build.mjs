@@ -83,9 +83,17 @@ for await (const file of walk(join(BUILD, 'src'))) {
   let src = await readFile(file, 'utf8')
   let changed = false
 
-  // 2a. feature('X') → false (supports multi-line calls and trailing commas)
+  // 2a. feature('X') → true/false (supports multi-line calls and trailing commas)
+  // Enable useful features for anycode, disable Anthropic-internal ones
+  // Features to enable for anycode. Add more as they're tested.
+  // Only enable features whose dependencies exist in the source tree.
+  const ENABLED_FEATURES = new Set([
+    'AGENT_TRIGGERS',           // /loop, CronCreate/Delete/List
+  ])
   if (/\bfeature\s*\(/.test(src)) {
-    src = src.replace(/\bfeature\s*\(\s*['"][A-Z_]+['"]\s*,?\s*\)/gs, 'false')
+    src = src.replace(/\bfeature\s*\(\s*['"]([A-Z_]+)['"]\s*,?\s*\)/gs, (match, flag) => {
+      return ENABLED_FEATURES.has(flag) ? 'true' : 'false'
+    })
     changed = true
   }
 

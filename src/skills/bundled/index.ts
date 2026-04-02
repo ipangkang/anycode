@@ -50,10 +50,6 @@ export function initBundledSkills(): void {
     /* eslint-enable @typescript-eslint/no-require-imports */
     registerLoopSkill()
   }
-  // anycode: register /loop when custom provider is configured
-  if ((globalThis as any).__anycode_has_provider) {
-    import('./loop.js').then(m => m.registerLoopSkill()).catch(() => {})
-  }
   if (feature('AGENT_TRIGGERS_REMOTE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const {
