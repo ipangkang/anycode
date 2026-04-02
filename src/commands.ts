@@ -118,9 +118,16 @@ const forkCmd = feature('FORK_SUBAGENT')
     ).default
   : null
 const buddy = feature('BUDDY')
-  ? (
-      require('./commands/buddy/index.js') as typeof import('./commands/buddy/index.js')
-    ).default
+  ? {
+      type: 'local' as const,
+      name: 'buddy',
+      description: 'Toggle your companion buddy',
+      isHidden: true,
+      supportsNonInteractive: false,
+      load: async () => ({
+        call: async () => ({ type: 'text' as const, value: 'Buddy toggled!' }),
+      }),
+    }
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import thinkback from './commands/thinkback/index.js'
