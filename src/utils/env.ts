@@ -21,13 +21,18 @@ export const getGlobalClaudeFile = memoize((): string => {
     return join(getClaudeConfigHomeDir(), '.config.json')
   }
 
-  // anycode: use anycode config dir, fallback to claude for migration
-  const filename = `.claude${fileSuffixForOauthConfig()}.json`
+  // anycode: prefer config.json in anycode config dir
   const anycodeFile = join(getClaudeConfigHomeDir(), 'config.json')
   if (getFsImplementation().existsSync(anycodeFile)) {
     return anycodeFile
   }
-  return join(process.env.ANYCODE_CONFIG_DIR || process.env.CLAUDE_CONFIG_DIR || homedir(), filename)
+  // Legacy fallback: check ~/.claude.json for migration from Claude Code
+  const legacyFile = join(homedir(), `.claude${fileSuffixForOauthConfig()}.json`)
+  if (getFsImplementation().existsSync(legacyFile)) {
+    return legacyFile
+  }
+  // Default: create new config in anycode dir
+  return anycodeFile
 })
 
 const hasInternetAccess = memoize(async (): Promise<boolean> => {
