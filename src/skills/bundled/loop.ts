@@ -25,6 +25,8 @@ Examples:
 function buildPrompt(args: string): string {
   return `# /loop — schedule a recurring prompt
 
+IMPORTANT: First use the ToolSearch tool with query "select:${CRON_CREATE_TOOL_NAME}" to load the ${CRON_CREATE_TOOL_NAME} tool definition. Do NOT use Bash crontab — use the built-in ${CRON_CREATE_TOOL_NAME} tool instead.
+
 Parse the input below into \`[interval] <prompt…>\` and schedule it with ${CRON_CREATE_TOOL_NAME}.
 
 ## Parsing (in priority order)
