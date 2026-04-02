@@ -1565,6 +1565,9 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
 }
 
 export function isClaudeAISubscriber(): boolean {
+  // anycode: treat custom provider users as subscribers — unlocks all features
+  if ((globalThis as any).__anycode_has_provider) return true
+
   if (!isAnthropicAuthEnabled()) {
     return false
   }

@@ -26,12 +26,9 @@ import { lt } from '../utils/semver.js'
  * is only referenced when bridge mode is enabled at build time.
  */
 export function isBridgeEnabled(): boolean {
-  // Positive ternary pattern — see docs/feature-gating.md.
-  // Negative pattern (if (!feature(...)) return) does not eliminate
-  // inline string literals from external builds.
   return feature('BRIDGE_MODE')
     ? isClaudeAISubscriber() &&
-        getFeatureValue_CACHED_MAY_BE_STALE('tengu_ccr_bridge', false)
+        getFeatureValue_CACHED_MAY_BE_STALE('tengu_ccr_bridge', true)
     : false
 }
 

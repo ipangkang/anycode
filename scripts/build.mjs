@@ -87,14 +87,29 @@ for await (const file of walk(join(BUILD, 'src'))) {
   // Enable useful features for anycode, disable Anthropic-internal ones
   // Features enabled for anycode. Tested: all build successfully.
   const ENABLED_FEATURES = new Set([
-    'AGENT_TRIGGERS',                // /loop, CronCreate/Delete/List
-    'BRIDGE_MODE',                   // /rc remote control
-    'FORK_SUBAGENT',                 // /fork sub-agent
-    'NEW_INIT',                      // improved /init
-    'TOKEN_BUDGET',                  // token budget tracking
-    'EXTRACT_MEMORIES',              // auto-memory extraction
-    'TRANSCRIPT_CLASSIFIER',         // auto permission mode
-    'PROMPT_CACHE_BREAK_DETECTION',  // prompt cache optimization
+    'AGENT_TRIGGERS',
+    'AGENT_TRIGGERS_REMOTE',
+    'BASH_CLASSIFIER',
+    'BG_SESSIONS',
+    'BRIDGE_MODE',
+    'BUDDY',
+    'CONNECTOR_TEXT',
+    'COORDINATOR_MODE',
+    'EXTRACT_MEMORIES',
+    'FORK_SUBAGENT',
+    'KAIROS_BRIEF',
+    'KAIROS_CHANNELS',
+    'KAIROS_GITHUB_WEBHOOKS',
+    'KAIROS_PUSH_NOTIFICATION',
+    'LODESTONE',
+    'MCP_SKILLS',
+    'MESSAGE_ACTIONS',
+    'NEW_INIT',
+    'PROMPT_CACHE_BREAK_DETECTION',
+    'TEAMMEM',
+    'TOKEN_BUDGET',
+    'TRANSCRIPT_CLASSIFIER',
+    'VOICE_MODE',
   ])
   if (/\bfeature\s*\(/.test(src)) {
     src = src.replace(/\bfeature\s*\(\s*['"]([A-Z_]+)['"]\s*,?\s*\)/gs, (match, flag) => {
