@@ -85,10 +85,16 @@ for await (const file of walk(join(BUILD, 'src'))) {
 
   // 2a. feature('X') → true/false (supports multi-line calls and trailing commas)
   // Enable useful features for anycode, disable Anthropic-internal ones
-  // Features to enable for anycode. Add more as they're tested.
-  // Only enable features whose dependencies exist in the source tree.
+  // Features enabled for anycode. Tested: all build successfully.
   const ENABLED_FEATURES = new Set([
-    'AGENT_TRIGGERS',           // /loop, CronCreate/Delete/List
+    'AGENT_TRIGGERS',                // /loop, CronCreate/Delete/List
+    'BRIDGE_MODE',                   // /rc remote control
+    'FORK_SUBAGENT',                 // /fork sub-agent
+    'NEW_INIT',                      // improved /init
+    'TOKEN_BUDGET',                  // token budget tracking
+    'EXTRACT_MEMORIES',              // auto-memory extraction
+    'TRANSCRIPT_CLASSIFIER',         // auto permission mode
+    'PROMPT_CACHE_BREAK_DETECTION',  // prompt cache optimization
   ])
   if (/\bfeature\s*\(/.test(src)) {
     src = src.replace(/\bfeature\s*\(\s*['"]([A-Z_]+)['"]\s*,?\s*\)/gs, (match, flag) => {
