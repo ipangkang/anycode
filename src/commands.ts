@@ -121,11 +121,32 @@ const buddy = feature('BUDDY')
   ? {
       type: 'local' as const,
       name: 'buddy',
-      description: 'Toggle your companion buddy',
-      isHidden: true,
+      description: 'Manage your companion buddy. Use "buddy rollout" to re-roll a new companion.',
+      argumentHint: '[rollout]',
       supportsNonInteractive: false,
       load: async () => ({
-        call: async () => ({ type: 'text' as const, value: 'Buddy toggled!' }),
+        call: async (args: string) => {
+          if (args.trim().toLowerCase() === 'rollout') {
+            const { saveGlobalConfig } = await import('./utils/config.js')
+            const { roll, companionUserId } = await import('./buddy/companion.js')
+            // Generate new random seed
+            const newSeed = `anycode-${Date.now()}-${Math.random().toString(36).slice(2)}`
+            // Clear roll cache
+            ;(roll as any).cache = undefined
+            saveGlobalConfig(current => ({
+              ...current,
+              companionSeed: newSeed,
+              companion: undefined, // Clear stored soul so it gets re-hatched
+            }))
+            // Preview the new companion
+            const { bones } = roll(newSeed)
+            return {
+              type: 'text' as const,
+              value: `New companion rolled! You got a ${bones.rarity} ${bones.species.name} ${bones.eye}${bones.hat !== 'none' ? ` with ${bones.hat}` : ''}!\nRestart anycode to see your new buddy.`,
+            }
+          }
+          return { type: 'text' as const, value: 'Usage: /buddy rollout — re-roll a new random companion' }
+        },
       }),
     }
   : null

@@ -118,6 +118,8 @@ export function rollWithSeed(seed: string): Roll {
 
 export function companionUserId(): string {
   const config = getGlobalConfig()
+  // anycode: companionSeed allows re-rolling via /buddy rollout
+  if ((config as any).companionSeed) return (config as any).companionSeed
   return config.oauthAccount?.accountUuid ?? config.userID ?? 'anon'
 }
 
