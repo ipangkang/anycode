@@ -87,14 +87,19 @@ for await (const file of walk(join(BUILD, 'src'))) {
   // Enable useful features for anycode, disable Anthropic-internal ones
   // Features enabled for anycode. Tested: all build successfully.
   const ENABLED_FEATURES = new Set([
-    'AGENT_TRIGGERS','AGENT_TRIGGERS_REMOTE','BASH_CLASSIFIER',
-    'BRIDGE_MODE','BUDDY','BUILDING_CLAUDE_APPS','CONNECTOR_TEXT','COORDINATOR_MODE',
-    'EXTRACT_MEMORIES','FORK_SUBAGENT',
-    'KAIROS_BRIEF','KAIROS_CHANNELS','KAIROS_DREAM','KAIROS_GITHUB_WEBHOOKS',
-    'KAIROS_PUSH_NOTIFICATION','LODESTONE','MCP_SKILLS','MESSAGE_ACTIONS',
-    'MONITOR_TOOL','NEW_INIT','PROMPT_CACHE_BREAK_DETECTION',
-    'RUN_SKILL_GENERATOR','TEAMMEM','TOKEN_BUDGET','TRANSCRIPT_CLASSIFIER',
-    'VOICE_MODE','WORKFLOW_SCRIPTS',
+    'AGENT_TRIGGERS',                // /loop — tested, works
+    'BRIDGE_MODE',                   // /rc — tested, works
+    'FORK_SUBAGENT',                 // /fork — tested, works
+    'NEW_INIT',                      // /init — tested, works
+    'TOKEN_BUDGET',                  // token tracking — silent, no UI noise
+    'EXTRACT_MEMORIES',              // auto-memory — silent, no UI noise
+    'TRANSCRIPT_CLASSIFIER',         // auto permissions — silent, no UI noise
+    'PROMPT_CACHE_BREAK_DETECTION',  // cache optimization — silent, no UI noise
+    'BASH_CLASSIFIER',               // bash safety — silent, no UI noise
+    'CONNECTOR_TEXT',                // text connector — silent, no UI noise
+    'LODESTONE',                     // deep links — silent, no UI noise
+    'MESSAGE_ACTIONS',               // message buttons — UI enhancement
+    'MCP_SKILLS','BUDDY',                    // MCP skill support — works
   ])
   if (/\bfeature\s*\(/.test(src)) {
     src = src.replace(/\bfeature\s*\(\s*['"]([A-Z_]+)['"]\s*,?\s*\)/gs, (match, flag) => {
