@@ -26,10 +26,10 @@ import { lt } from '../utils/semver.js'
  * is only referenced when bridge mode is enabled at build time.
  */
 export function isBridgeEnabled(): boolean {
-  return feature('BRIDGE_MODE')
-    ? isClaudeAISubscriber() &&
-        getFeatureValue_CACHED_MAY_BE_STALE('tengu_ccr_bridge', true)
-    : false
+  if (!feature('BRIDGE_MODE')) return false
+  if ((globalThis as any).__anycode_has_provider) return true
+  return isClaudeAISubscriber() &&
+    getFeatureValue_CACHED_MAY_BE_STALE('tengu_ccr_bridge', true)
 }
 
 /**
@@ -45,10 +45,10 @@ export function isBridgeEnabled(): boolean {
  * `isBridgeEnabled()` instead.
  */
 export async function isBridgeEnabledBlocking(): Promise<boolean> {
-  return feature('BRIDGE_MODE')
-    ? isClaudeAISubscriber() &&
-        (await checkGate_CACHED_OR_BLOCKING('tengu_ccr_bridge'))
-    : false
+  if (!feature('BRIDGE_MODE')) return false
+  if ((globalThis as any).__anycode_has_provider) return true
+  return isClaudeAISubscriber() &&
+    (await checkGate_CACHED_OR_BLOCKING('tengu_ccr_bridge'))
 }
 
 /**
@@ -66,6 +66,7 @@ export async function isBridgeEnabledBlocking(): Promise<boolean> {
  */
 export async function getBridgeDisabledReason(): Promise<string | null> {
   if (feature('BRIDGE_MODE')) {
+    if ((globalThis as any).__anycode_has_provider) return null
     if (!isClaudeAISubscriber()) {
       return 'Remote Control requires a claude.ai subscription. Run `claude auth login` to sign in with your claude.ai account.'
     }
