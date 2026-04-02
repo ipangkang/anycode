@@ -306,30 +306,46 @@ async function* streamOpenAIResponse(
 ): AsyncGenerator<AnthropicStreamEvent> {
   const url = `${baseUrl.replace(/\/+$/, '')}/chat/completions`
 
-  const response = await fetchWithRetry(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(body),
-    signal,
-  })
+  // Auto-retry with lower max_tokens on 400 errors
+  let currentBody = body
+  let response: Response | null = null
+  for (let tokenRetry = 0; tokenRetry < 3; tokenRetry++) {
+    response = await fetchWithRetry(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(currentBody),
+      signal,
+    })
 
-  if (!response.ok) {
-    const errorBody = await response.text().catch(() => '')
-    let message = `API error ${response.status}: ${errorBody}`
-    if (response.status === 401) {
-      message = `Authentication failed (${response.status}). Check your API key in ~/.anycode/provider.json`
-    } else if (response.status === 429) {
-      message = `Rate limited (${response.status}). Wait a moment and try again.`
-    } else if (response.status === 404) {
-      message = `Model or endpoint not found (${response.status}). Check baseUrl and model in ~/.anycode/provider.json`
-    } else if (response.status === 400 && errorBody.includes('max_tokens')) {
-      message = `max_tokens too large. Add "maxTokens" to ~/.anycode/provider.json to set a lower limit.`
+    if (response.status === 400) {
+      const errorBody = await response.text().catch(() => '')
+      if (errorBody.includes('max_tokens') && currentBody.max_tokens && currentBody.max_tokens > 1024) {
+        // Halve max_tokens and retry
+        currentBody = { ...currentBody, max_tokens: Math.floor(currentBody.max_tokens / 2) }
+        continue
+      }
+      const error: any = new Error(`API error 400: ${errorBody}`)
+      error.status = 400
+      throw error
+    }
+    break
+  }
+
+  if (!response!.ok) {
+    const errorBody = await response!.text().catch(() => '')
+    let message = `API error ${response!.status}: ${errorBody}`
+    if (response!.status === 401) {
+      message = `Authentication failed (${response!.status}). Check your API key in ~/.anycode/provider.json`
+    } else if (response!.status === 429) {
+      message = `Rate limited (${response!.status}). Wait a moment and try again.`
+    } else if (response!.status === 404) {
+      message = `Model or endpoint not found (${response!.status}). Check baseUrl and model in ~/.anycode/provider.json`
     }
     const error: any = new Error(message)
-    error.status = response.status
+    error.status = response!.status
     throw error
   }
 
