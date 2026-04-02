@@ -29,23 +29,23 @@ type RipgrepConfig = {
 }
 
 const getRipgrepConfig = memoize((): RipgrepConfig => {
+  // anycode: always try system ripgrep first since we don't have vendor/embedded rg
+  const { cmd: systemPath } = findExecutable('rg', [])
+  if (systemPath !== 'rg') {
+    return { mode: 'system', command: 'rg', args: [] }
+  }
+
   const userWantsSystemRipgrep = isEnvDefinedFalsy(
     process.env.USE_BUILTIN_RIPGREP,
   )
 
-  // Try system ripgrep if user wants it
   if (userWantsSystemRipgrep) {
-    const { cmd: systemPath } = findExecutable('rg', [])
     if (systemPath !== 'rg') {
-      // SECURITY: Use command name 'rg' instead of systemPath to prevent PATH hijacking
-      // If we used systemPath, a malicious ./rg.exe in current directory could be executed
-      // Using just 'rg' lets the OS resolve it safely with NoDefaultCurrentDirectoryInExePath protection
       return { mode: 'system', command: 'rg', args: [] }
     }
   }
 
   // In bundled (native) mode, ripgrep is statically compiled into bun-internal
-  // and dispatches based on argv[0]. We spawn ourselves with argv0='rg'.
   if (isInBundledMode()) {
     return {
       mode: 'embedded',
@@ -60,6 +60,14 @@ const getRipgrepConfig = memoize((): RipgrepConfig => {
     process.platform === 'win32'
       ? path.resolve(rgRoot, `${process.arch}-win32`, 'rg.exe')
       : path.resolve(rgRoot, `${process.arch}-${process.platform}`, 'rg')
+
+  // Fallback: if vendor rg doesn't exist, try system rg anyway
+  try {
+    const fs = require('fs')
+    if (!fs.existsSync(command)) {
+      return { mode: 'system', command: 'rg', args: [] }
+    }
+  } catch {}
 
   return { mode: 'builtin', command, args: [] }
 })
