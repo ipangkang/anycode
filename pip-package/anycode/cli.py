@@ -29,7 +29,19 @@ def find_node() -> str | None:
     return None
 
 
+def check_first_run() -> bool:
+    """Check if this is first run (no provider config)."""
+    config_dir = Path(os.environ.get("ANYCODE_CONFIG_DIR", Path.home() / ".anycode"))
+    return not (config_dir / "provider.json").exists()
+
+
 def main() -> None:
+    # Handle `anycode setup` — pure Python, no Node.js needed
+    if len(sys.argv) > 1 and sys.argv[1] == "setup":
+        from .setup_wizard import run_setup
+        run_setup()
+        return
+
     node = find_node()
     if not node:
         print(
@@ -51,6 +63,15 @@ def main() -> None:
             file=sys.stderr,
         )
         sys.exit(1)
+
+    # First run: prompt for setup if no config exists
+    if check_first_run() and "--test" not in sys.argv and "--version" not in sys.argv and "-v" not in sys.argv and "--help" not in sys.argv and "-h" not in sys.argv:
+        print("\033[33mNo provider configured. Running setup...\033[0m\n")
+        from .setup_wizard import run_setup
+        run_setup()
+        # Re-check after setup
+        if check_first_run():
+            return
 
     # Set NODE_PATH so external packages can be found from the bundle's node_modules
     node_modules = bundle.parent / "node_modules"

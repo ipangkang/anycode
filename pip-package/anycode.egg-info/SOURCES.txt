@@ -1,7 +1,9 @@
+LICENSE
 README.md
 pyproject.toml
 anycode/__init__.py
 anycode/cli.py
+anycode/setup_wizard.py
 anycode.egg-info/PKG-INFO
 anycode.egg-info/SOURCES.txt
 anycode.egg-info/dependency_links.txt

@@ -22,6 +22,7 @@ classifiers = [
 
 [project.scripts]
 anycode = "anycode.cli:main"
+anycode-setup = "anycode.setup_wizard:run_setup"
 
 [project.urls]
 Homepage = "https://github.com/anthropics/claude-code"
