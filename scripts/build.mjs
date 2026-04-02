@@ -147,6 +147,28 @@ for await (const file of walk(join(BUILD, 'src'))) {
     src = src.replaceAll('claude.ai/code', 'github.com/anycode')
     changed = true
   }
+  // 2g. Replace `claude` CLI references with `anycode`
+  // Only replace command-line invocations, not variable names or other uses
+  for (const pattern of [
+    ['claude --resume', 'anycode --resume'],
+    ['claude --continue', 'anycode --continue'],
+    ['claude -r ', 'anycode -r '],
+    ['claude -c', 'anycode -c'],
+    ['claude update', 'anycode update'],
+    ['claude install', 'anycode install'],
+    ['claude auth', 'anycode auth'],
+    ['`claude`', '`anycode`'],
+    ["'claude'", "'anycode'"],
+    ['Run claude ', 'Run anycode '],
+    ['run claude ', 'run anycode '],
+    ['claude mcp', 'anycode mcp'],
+    ['claude doctor', 'anycode doctor'],
+  ]) {
+    if (src.includes(pattern[0])) {
+      src = src.replaceAll(pattern[0], pattern[1])
+      changed = true
+    }
+  }
 
   if (changed) {
     await writeFile(file, src, 'utf8')

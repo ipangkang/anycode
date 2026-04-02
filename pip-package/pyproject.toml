@@ -3,8 +3,8 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "anycode"
-version = "1.0.0"
+name = "anycode-ai"
+version = "1.0.2"
 description = "Universal coding agent for your terminal — use any OpenAI-compatible LLM"
 readme = "README.md"
 license = {text = "MIT"}
