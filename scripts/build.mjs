@@ -87,7 +87,7 @@ for await (const file of walk(join(BUILD, 'src'))) {
   // Enable useful features for anycode, disable Anthropic-internal ones
   // Features enabled for anycode. Tested: all build successfully.
   const ENABLED_FEATURES = new Set([
-    'AGENT_TRIGGERS','AGENT_TRIGGERS_REMOTE','BASH_CLASSIFIER','BG_SESSIONS',
+    'AGENT_TRIGGERS','AGENT_TRIGGERS_REMOTE','BASH_CLASSIFIER',
     'BRIDGE_MODE','BUDDY','BUILDING_CLAUDE_APPS','CONNECTOR_TEXT','COORDINATOR_MODE',
     'EXTRACT_MEMORIES','FORK_SUBAGENT',
     'KAIROS_BRIEF','KAIROS_CHANNELS','KAIROS_DREAM','KAIROS_GITHUB_WEBHOOKS',

@@ -218,10 +218,13 @@ export function translateRequest(anthropicReq: AnthropicRequest): OpenAIRequest 
   // Build request — cap max_tokens based on provider config
   const providerCfg = loadProviderConfig()
   const maxTokensCap = providerCfg ? getMaxTokensForProvider(providerCfg) : 8192
+  const tokenLimit = Math.min(anthropicReq.max_tokens || maxTokensCap, maxTokensCap)
   const oaiReq: OpenAIRequest = {
     model: config?.model ?? anthropicReq.model,
     messages,
-    max_tokens: Math.min(anthropicReq.max_tokens || maxTokensCap, maxTokensCap),
+    // New OpenAI models (gpt-5.1, o3, etc.) use max_completion_tokens instead of max_tokens
+    // Send both — the auto-retry below handles the "unsupported_parameter" error
+    max_tokens: tokenLimit,
   }
 
   if (tools) oaiReq.tools = tools
@@ -322,8 +325,14 @@ async function* streamOpenAIResponse(
 
     if (response.status === 400) {
       const errorBody = await response.text().catch(() => '')
+      // New models require max_completion_tokens instead of max_tokens
+      if (errorBody.includes('max_completion_tokens') || (errorBody.includes('max_tokens') && errorBody.includes('unsupported'))) {
+        const tokens = (currentBody as any).max_tokens || (currentBody as any).max_completion_tokens || 8192
+        const { max_tokens: _, ...rest } = currentBody as any
+        currentBody = { ...rest, max_completion_tokens: tokens } as any
+        continue
+      }
       if (errorBody.includes('max_tokens') && currentBody.max_tokens && currentBody.max_tokens > 1024) {
-        // Halve max_tokens and retry
         currentBody = { ...currentBody, max_tokens: Math.floor(currentBody.max_tokens / 2) }
         continue
       }
