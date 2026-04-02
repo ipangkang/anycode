@@ -245,6 +245,59 @@ export function translateRequest(anthropicReq: AnthropicRequest): OpenAIRequest 
 
 // ── Streaming HTTP Client ──
 
+const MAX_RETRIES = 2
+const REQUEST_TIMEOUT_MS = 300_000  // 5 minutes
+
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  retries: number = MAX_RETRIES,
+): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+      const mergedSignal = init.signal
+        ? AbortSignal.any([init.signal, controller.signal])
+        : controller.signal
+
+      const response = await fetch(url, { ...init, signal: mergedSignal })
+      clearTimeout(timeoutId)
+
+      // Retry on 429 (rate limit) and 5xx (server error)
+      if ((response.status === 429 || response.status >= 500) && attempt < retries) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 8000)
+        await new Promise(r => setTimeout(r, delay))
+        continue
+      }
+      return response
+    } catch (e: any) {
+      if (attempt < retries && !init.signal?.aborted) {
+        // Retry on network errors (ECONNREFUSED, ETIMEDOUT, etc.)
+        const delay = Math.min(1000 * Math.pow(2, attempt), 8000)
+        await new Promise(r => setTimeout(r, delay))
+        continue
+      }
+      // Friendly error for common network issues
+      const msg = String(e?.cause?.code || e?.code || e?.message || e)
+      if (msg.includes('ECONNREFUSED')) {
+        throw new Error(`Connection refused at ${url}. Is the API server running?`)
+      }
+      if (msg.includes('ETIMEDOUT') || msg.includes('UND_ERR_CONNECT_TIMEOUT') || e.name === 'AbortError') {
+        throw new Error(`Request timed out. The API at ${url} may be overloaded or unreachable.`)
+      }
+      if (msg.includes('ENOTFOUND') || msg.includes('getaddrinfo')) {
+        throw new Error(`Cannot reach ${url}. Check your baseUrl in ~/.anycode/provider.json`)
+      }
+      if (msg.includes('fetch failed') || msg.includes('ECONNRESET')) {
+        throw new Error(`Network error connecting to ${url}. Check your internet connection and baseUrl.`)
+      }
+      throw e
+    }
+  }
+  throw new Error('Unreachable')
+}
+
 async function* streamOpenAIResponse(
   baseUrl: string,
   apiKey: string,
@@ -253,7 +306,7 @@ async function* streamOpenAIResponse(
 ): AsyncGenerator<AnthropicStreamEvent> {
   const url = `${baseUrl.replace(/\/+$/, '')}/chat/completions`
 
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -266,7 +319,6 @@ async function* streamOpenAIResponse(
   if (!response.ok) {
     const errorBody = await response.text().catch(() => '')
     let message = `API error ${response.status}: ${errorBody}`
-    // Provide user-friendly hints for common errors
     if (response.status === 401) {
       message = `Authentication failed (${response.status}). Check your API key in ~/.anycode/provider.json`
     } else if (response.status === 429) {
