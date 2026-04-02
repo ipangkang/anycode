@@ -25,9 +25,9 @@ Examples:
 function buildPrompt(args: string): string {
   return `# /loop — schedule a recurring prompt
 
-IMPORTANT: First use the ToolSearch tool with query "select:${CRON_CREATE_TOOL_NAME}" to load the ${CRON_CREATE_TOOL_NAME} tool definition. Do NOT use Bash crontab — use the built-in ${CRON_CREATE_TOOL_NAME} tool instead.
+IMPORTANT: First use the ToolSearch tool with query "select:CronCreate" to load the CronCreate tool. Do NOT use Bash crontab or system cron — use the built-in CronCreate tool instead.
 
-Parse the input below into \`[interval] <prompt…>\` and schedule it with ${CRON_CREATE_TOOL_NAME}.
+Parse the input below into \`[interval] <prompt…>\` and schedule it with CronCreate.
 
 ## Parsing (in priority order)
 
@@ -35,7 +35,7 @@ Parse the input below into \`[interval] <prompt…>\` and schedule it with ${CRO
 2. **Trailing "every" clause**: otherwise, if the input ends with \`every <N><unit>\` or \`every <N> <unit-word>\` (e.g. \`every 20m\`, \`every 5 minutes\`, \`every 2 hours\`), extract that as the interval and strip it from the prompt. Only match when what follows "every" is a time expression — \`check every PR\` has no interval.
 3. **Default**: otherwise, interval is \`${DEFAULT_INTERVAL}\` and the entire input is the prompt.
 
-If the resulting prompt is empty, show usage \`/loop [interval] <prompt>\` and stop — do not call ${CRON_CREATE_TOOL_NAME}.
+If the resulting prompt is empty, show usage \`/loop [interval] <prompt>\` and stop — do not call CronCreate.
 
 Examples:
 - \`5m /babysit-prs\` → interval \`5m\`, prompt \`/babysit-prs\` (rule 1)
@@ -61,11 +61,11 @@ Supported suffixes: \`s\` (seconds, rounded up to nearest minute, min 1), \`m\` 
 
 ## Action
 
-1. Call ${CRON_CREATE_TOOL_NAME} with:
+1. Call CronCreate with:
    - \`cron\`: the expression from the table above
    - \`prompt\`: the parsed prompt from above, verbatim (slash commands are passed through unchanged)
    - \`recurring\`: \`true\`
-2. Briefly confirm: what's scheduled, the cron expression, the human-readable cadence, that recurring tasks auto-expire after ${DEFAULT_MAX_AGE_DAYS} days, and that they can cancel sooner with ${CRON_DELETE_TOOL_NAME} (include the job ID).
+2. Briefly confirm: what's scheduled, the cron expression, the human-readable cadence, that recurring tasks auto-expire after 7 days, and that they can cancel sooner with CronDelete (include the job ID).
 3. **Then immediately execute the parsed prompt now** — don't wait for the first cron fire. If it's a slash command, invoke it via the Skill tool; otherwise act on it directly.
 
 ## Input
