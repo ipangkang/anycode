@@ -120,32 +120,48 @@ const forkCmd = feature('FORK_SUBAGENT')
 const buddy = feature('BUDDY')
   ? {
       type: 'local' as const,
-      name: 'buddy',
-      description: 'Manage your companion buddy. Use "buddy rollout" to re-roll a new companion.',
-      argumentHint: '[rollout]',
+      name: 'buddy-rollout',
+      description: 'Re-roll a new random companion buddy with stats and animation',
       supportsNonInteractive: false,
       load: async () => ({
-        call: async (args: string) => {
-          if (args.trim().toLowerCase() === 'rollout') {
-            const { saveGlobalConfig } = await import('./utils/config.js')
-            const { roll, companionUserId } = await import('./buddy/companion.js')
-            // Generate new random seed
-            const newSeed = `anycode-${Date.now()}-${Math.random().toString(36).slice(2)}`
-            // Clear roll cache
-            ;(roll as any).cache = undefined
-            saveGlobalConfig(current => ({
-              ...current,
-              companionSeed: newSeed,
-              companion: undefined, // Clear stored soul so it gets re-hatched
-            }))
-            // Preview the new companion
-            const { bones } = roll(newSeed)
-            return {
-              type: 'text' as const,
-              value: `New companion rolled! You got a ${bones.rarity} ${bones.species.name} ${bones.eye}${bones.hat !== 'none' ? ` with ${bones.hat}` : ''}!\nRestart anycode to see your new buddy.`,
-            }
+        call: async () => {
+          const { saveGlobalConfig } = await import('./utils/config.js')
+          const { roll } = await import('./buddy/companion.js')
+          const { renderSprite } = await import('./buddy/sprites.js')
+          const newSeed = `anycode-${Date.now()}-${Math.random().toString(36).slice(2)}`
+          saveGlobalConfig(current => ({
+            ...current,
+            companionSeed: newSeed,
+            companion: undefined,
+          }))
+          const { bones } = roll(newSeed)
+          const sprite = renderSprite(bones, 0)
+
+          // Build stats display — stats is Record<StatName, number> with values 1-100
+          const statBars = Object.entries(bones.stats).map(([name, val]: [string, any]) => {
+            const bars = Math.round(val / 10)
+            return `  ${name.padEnd(10)} ${'█'.repeat(bars)}${'░'.repeat(10 - bars)} ${val}`
+          }).join('\n')
+
+          const rarityColors: Record<string, string> = {
+            common: '', uncommon: '🟢', rare: '🔵', epic: '🟣', legendary: '🟡',
           }
-          return { type: 'text' as const, value: 'Usage: /buddy rollout — re-roll a new random companion' }
+
+          return {
+            type: 'text' as const,
+            value: [
+              `\n🎲 Rolling new companion...\n`,
+              sprite.join('\n'),
+              ``,
+              `${rarityColors[bones.rarity] || ''} ${bones.rarity.toUpperCase()} ${bones.species.name}!`,
+              `Eyes: ${bones.eye}  Hat: ${bones.hat}${bones.shiny ? '  ✨ SHINY!' : ''}`,
+              ``,
+              `📊 Stats:`,
+              statBars,
+              ``,
+              `Restart anycode to see your new buddy.`,
+            ].join('\n'),
+          }
         },
       }),
     }
