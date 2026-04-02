@@ -87,6 +87,7 @@ interface OpenAIRequest {
   tools?: OpenAITool[]
   tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } }
   max_tokens?: number
+  max_completion_tokens?: number
   temperature?: number
   top_p?: number
   stop?: string[]
@@ -222,9 +223,9 @@ export function translateRequest(anthropicReq: AnthropicRequest): OpenAIRequest 
   const oaiReq: OpenAIRequest = {
     model: config?.model ?? anthropicReq.model,
     messages,
-    // New OpenAI models (gpt-5.1, o3, etc.) use max_completion_tokens instead of max_tokens
-    // Send both — the auto-retry below handles the "unsupported_parameter" error
-    max_tokens: tokenLimit,
+    // Use max_completion_tokens (new OpenAI standard, works with gpt-4o, gpt-5.1, o3, etc.)
+    // Falls back to max_tokens via auto-retry if provider doesn't support it
+    max_completion_tokens: tokenLimit,
   }
 
   if (tools) oaiReq.tools = tools
@@ -325,15 +326,27 @@ async function* streamOpenAIResponse(
 
     if (response.status === 400) {
       const errorBody = await response.text().catch(() => '')
-      // New models require max_completion_tokens instead of max_tokens
-      if (errorBody.includes('max_completion_tokens') || (errorBody.includes('max_tokens') && errorBody.includes('unsupported'))) {
-        const tokens = (currentBody as any).max_tokens || (currentBody as any).max_completion_tokens || 8192
+      // Handle token parameter incompatibility between providers
+      if (errorBody.includes('max_completion_tokens') && (currentBody as any).max_completion_tokens) {
+        // Provider doesn't support max_completion_tokens → switch to max_tokens
+        const tokens = (currentBody as any).max_completion_tokens
+        const { max_completion_tokens: _, ...rest } = currentBody as any
+        currentBody = { ...rest, max_tokens: tokens } as any
+        continue
+      }
+      if (errorBody.includes('max_tokens') && errorBody.includes('unsupported') && (currentBody as any).max_tokens) {
+        // Provider doesn't support max_tokens → switch to max_completion_tokens
+        const tokens = (currentBody as any).max_tokens
         const { max_tokens: _, ...rest } = currentBody as any
         currentBody = { ...rest, max_completion_tokens: tokens } as any
         continue
       }
       if (errorBody.includes('max_tokens') && currentBody.max_tokens && currentBody.max_tokens > 1024) {
         currentBody = { ...currentBody, max_tokens: Math.floor(currentBody.max_tokens / 2) }
+        continue
+      }
+      if (errorBody.includes('max_completion_tokens') && (currentBody as any).max_completion_tokens > 1024) {
+        (currentBody as any).max_completion_tokens = Math.floor((currentBody as any).max_completion_tokens / 2)
         continue
       }
       const error: any = new Error(`API error 400: ${errorBody}`)
