@@ -34,14 +34,15 @@ export const DEFAULT_MAX_AGE_DAYS =
  * `CLAUDE_CODE_DISABLE_CRON` is a local override that wins over GB.
  */
 export function isKairosCronEnabled(): boolean {
-  return feature('AGENT_TRIGGERS')
-    ? !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_CRON) &&
-        getFeatureValue_CACHED_WITH_REFRESH(
-          'tengu_kairos_cron',
-          true,
-          KAIROS_CRON_REFRESH_MS,
-        )
-    : false
+  if (!feature('AGENT_TRIGGERS')) return false
+  if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_CRON)) return false
+  // anycode: skip GrowthBook check when using custom provider
+  if ((globalThis as any).__anycode_has_provider) return true
+  return getFeatureValue_CACHED_WITH_REFRESH(
+    'tengu_kairos_cron',
+    true,
+    KAIROS_CRON_REFRESH_MS,
+  )
 }
 
 /**
